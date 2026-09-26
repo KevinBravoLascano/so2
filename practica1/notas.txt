@@ -1,0 +1,191 @@
+p1
+uid=1002(seguridad1) gid=1004(seguridad1) groups=1004(seguridad1)
+uid=1003(seguridad2) gid=1005(seguridad2) groups=1005(seguridad2)
+
+p2
+oslabadmin@oslab:~$ sudo mkhomedir_helper seguridad1
+[sudo] password for oslabadmin: 
+oslabadmin@oslab:~$ sudo -u seguridad1 -i
+$ id 
+uid=1002(seguridad1) gid=1004(seguridad1) groups=1004(seguridad1)
+$ 
+
+oslabadmin@oslab:~$ sudo usermod -aG grupo1 seguridad1
+sudo usermod -aG grupo1 oslabadmin
+oslabadmin@oslab:~$ sudo usermod -aG grupo2 seguridad2
+sudo usermod -aG grupo2 oslab
+oslabadmin@oslab:~$ su - seguridad1
+Password: 
+$ id
+uid=1002(seguridad1) gid=1004(seguridad1) groups=1004(seguridad1),1002(grupo1)
+$ 
+
+p3
+
+oslabadmin@oslab:~$ ls -ld /tmp/test
+ls: cannot access '/tmp/test': No such file or directory
+oslabadmin@oslab:~$ mkdir -m 0755 /tmp/test
+oslabadmin@oslab:~$ echo "El progreso es posible cuando aplicamos la razón para mejorar el bienestar humano" > /tmp/test/ejemplo.txt
+oslabadmin@oslab:~$ chmod 0644 /tmp/test/ejemplo.txt
+oslabadmin@oslab:~$ ls -l /tmp/test/ejemplo.txt
+-rw-r--r-- 1 oslabadmin oslabadmin 83 Sep 26 14:16 /tmp/test/ejemplo.txt
+oslabadmin@oslab:~$ ls -l /tmp/test/ejemplo.txt
+-rw-r--r-- 1 oslabadmin oslabadmin 83 Sep 26 14:16 /tmp/test/ejemplo.txt
+oslabadmin@oslab:~$ ls -ld /tmp/test
+drwxr-xr-x 2 oslabadmin oslabadmin 4096 Sep 26 14:16 /tmp/test
+oslabadmin@oslab:~$ ls -l /tmp/test/ejemplo.txt
+-rw-r--r-- 1 oslabadmin oslabadmin 83 Sep 26 14:16 /tmp/test/ejemplo.txt
+oslabadmin@oslab:~$ 
+
+p4
+
+oslab@oslab:~$ gedit /tmp/test/ejemplo.txt
+oslab@oslab:~$ 
+
+deja abrir el archivo
+pero solo en modo READ only
+
+
+oslab@oslab:~$ echo "Intento de modificación desde terminal" >> /tmp/test/ejemplo.txt
+bash: /tmp/test/ejemplo.txt: Permission denied
+oslab@oslab:~$ 
+
+si intentas escribir desde terminal permiso dneegado
+
+p5
+
+slabadmin@oslab:~$ sudo chgrp grupo1 /tmp/test
+sudo chgrp grupo1 /tmp/test/ejemplo.txt
+[sudo] password for oslabadmin: 
+oslabadmin@oslab:~$ sudo chmod 0750 /tmp/test
+oslabadmin@oslab:~$ sudo chmod 0660 /tmp/test/ejemplo.txt
+oslabadmin@oslab:~$ sudo - seguridad1
+sudo: -: command not found
+oslabadmin@oslab:~$ su - seguridad1
+Password: 
+$ gedit /tmp/test/ejemplo.txt
+
+(gedit:53659): Gtk-WARNING **: 14:35:07.537: cannot open display: 
+$ cat /tmp/test/ejemplo.txt
+El progreso es posible cuando aplicamos la razón para mejorar el bienestar humano
+$ echo "Texto" >> /tmp/test/ejemplo.txt                                   
+$ ^[[A^[[A^[[A^[[A^[[B^[[A^[[B^[[B^[[B^[[B^[[B
+-sh: 4: : not found
+$ cat /tmp/test/ejemplo.txt
+El progreso es posible cuando aplicamos la razón para mejorar el bienestar humano
+Texto
+$ exit
+
+
+oslab@oslab:~$ cat /tmp/test/ejemplo.txt
+cat: /tmp/test/ejemplo.txt: Permission denied
+oslab@oslab:~$ 
+
+oslab no tiene permiso y admin si
+
+
+p6
+
+creacion ficheros y directorio:
+oslabadmin@oslab:~$ mkdir /tmp/SO2
+oslabadmin@oslab:~$ sudo chown oslabadmin:grupo1 /tmp/SO2
+[sudo] password for oslabadmin: 
+oslabadmin@oslab:~$ sudo chmod 2770 /tmp/SO2
+oslabadmin@oslab:~$ sudo setfacl -b /tmp/SO2
+oslabadmin@oslab:~$ sudo - seguridad1 -i
+sudo: -: command not found
+oslabadmin@oslab:~$ su - seguridad1 -i
+su: invalid option -- 'i'
+Try 'su --help' for more information.
+oslabadmin@oslab:~$ su - seguridad1
+Password: 
+$ cd /tmp/SO2 
+$ umask 0022
+$ echo "test1" > fichero1.txt
+$ umask 0007
+$ echo "test2" > fichero2.txt
+$ ls -l /tmp/SO2
+total 8
+-rw-r--r-- 1 seguridad1 grupo1 6 Sep 26 16:20 fichero1.txt
+-rw-rw---- 1 seguridad1 grupo1 6 Sep 26 16:20 fichero2.txt
+$ exit
+oslabadmin@oslab:~$ cat /tmp/SO2/fichero1.txt
+test1
+oslabadmin@oslab:~$ 
+
+comprobacion q oslab no tiene acceso por ser de otro grupo:
+
+oslab@oslab:~$ cat /tmp/SO2/fichero1.txt
+cat: /tmp/SO2/fichero1.txt: Permission denied
+oslab@oslab:~$ ls /tmp/SO2
+ls: cannot open directory '/tmp/SO2': Permission denied
+oslab@oslab:~$ 
+
+p7
+
+admin creacion y configuracion:
+
+touch /tmp/SO2/acl1.txt
+oslabadmin@oslab:~$ setfacl -m u:oslab:rw-,g:grupo2:r-- /tmp/SO2/acl1.txt
+oslabadmin@oslab:~$ getfacl -a /tmp/SO2/acl1.txt
+getfacl: Removing leading '/' from absolute path names
+# file: tmp/SO2/acl1.txt
+# owner: oslabadmin
+# group: grupo1
+user::rw-
+user:oslab:rw-
+group::rw-
+group:grupo2:r--
+mask::rw-
+other::r--
+
+oslabadmin@oslab:~$ setfacl -m m::r-- /tmp/SO2/acl1.txt
+oslabadmin@oslab:~$ setfacl -m m::rw- /tmp/SO2/acl1.txt
+
+eliminar oslab
+oslabadmin@oslab:~$ setfacl -x u:oslab /tmp/SO2/acl1.txt
+
+comprbar q ya nonesta oslab
+oslabadmin@oslab:~$ getfacl -a /tmp/SO2/acl1.txt
+getfacl: Removing leading '/' from absolute path names
+# file: tmp/SO2/acl1.txt
+# owner: oslabadmin
+# group: grupo1
+user::rw-
+group::rw-
+group:grupo2:r--
+mask::rw-
+other::r--
+
+oslabadmin@oslab:~$ id
+uid=1000(oslabadmin) gid=1000(oslabadmin) groups=1000(oslabadmin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),110(lxd),998(vboxsf),999(docker)
+oslabadmin@oslab:~$ sudo usermod -aG grupo2 oslab
+[sudo] password for oslabadmin: 
+oslabadmin@oslab:~$ sudo setfacl -m g:grupo2:r-x /tmp/SO2
+oslabadmin@oslab:~$ 
+
+comprpobacion q oslab no deja escribir:
+echo "texto oslab" >> /tmp/SO2/acl1.txt
+bash: /tmp/SO2/acl1.txt: Permission denied
+
+si leer pero como no hay texto no sale nada por su pertenencia a grupo2:
+ cat /tmp/SO2/acl1.txt
+oslab@oslab:~$ 
+
+con mascara ---:
+
+oslabadmin@oslab:~$ setfacl -m u:oslab:--- /tmp/SO2/acl1.txt
+oslabadmin@oslab:~$ sudo -u oslab -i
+oslab@oslab:~$ cat /tmp/SO2/acl1.txtç
+cat: /tmp/SO2/acl1.txtç: No such file or directory
+oslab@oslab:~$ cat /tmp/SO2/acl1.txt
+cat: /tmp/SO2/acl1.txt: Permission denied
+oslab@oslab:~$ exit
+logout
+oslabadmin@oslab:~$ 
+
+volvemos a sacar al oslab:
+
+setfacl -x u:oslab /tmp/SO2/acl1.txt
+
+
